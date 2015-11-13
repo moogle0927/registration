@@ -28,6 +28,7 @@
 
 #include "raw_io.h"
 #include "info.h"
+#include "template_matching.h"
 
 
 template <class IMG_T>
@@ -114,19 +115,6 @@ void main(int argc, char *argv[])
 
 
 
-	// input information
-	//std::string dirLabel = nari::file::add_delim(infoDir["in"]);	//アドレス末尾に「/」を付ける
-	//std::string set = infoDir["set"];
-	//std::string pathId = infoDir["case"];
-
-	//pathId += set;
-	//std::string dirOrg = nari::file::add_delim(infoDir["out"]) + infoDir["01-01"];
-	//std::string dirDisp = nari::file::add_delim(infoDir["out"]) + infoDir["07-01"];
-	//std::string dirO = nari::file::add_delim(infoDir["forLearn"]) + infoDir["labelStd"];
-	//std::string dirBase = dirDisp;
-
-
-
 	// information of case
 	nari::case_list_t cases;
 	cases.load_file_txt(input_info.pathId, true);
@@ -159,42 +147,42 @@ void main(int argc, char *argv[])
 	mhdRefS.reso123(xrRefS, yrRefS, zrRefS);
 
 	//ここから基準症例のテンプレートマッチングを行う計測点の座標を算出,　保存
-	std::ofstream ofs_list(input_info.dirBase +input_info. caseRef.dir + "/disp/" + input_info.caseRef.basename + ".txt");
+	std::ofstream Ref_list(input_info.dirBase +input_info. caseRef.dir + "/disp/" + input_info.caseRef.basename + ".txt");
 
 	nari::vector<int> x_disp (xeRef,0);
 	nari::vector<int> y_disp (yeRef,0);
 	nari::vector<int> z_disp (zeRef,0);
 
-	int i,j,k;
+	int p,q,r;
 	int x,y,z;
-	i=0;
-	j=0;
-	k=0;
+	p=0;
+	q=0;
+	r=0;
+	int rx = input_info.rangex;
+	int ry = input_info.rangey;
+	int rz = input_info.rangez;
 
-	while (x_disp[i] < xeRef)
-	{
-		i++;
-		x_disp[i] = x_disp[i-1]+input_info.d;
+	for ( x = rx ; x < xeRef ; x+=rx ){
+		x_disp[p] = x;
+		p++;
 	} 
 
-	while (y_disp[j] < yeRef)
-	{
-		j++;
-		y_disp[j] = y_disp[j-1]+input_info.d;
-	} 
+	for ( y = ry ; y < yeRef ; y+=ry ){
+		y_disp[q] = y;
+		q++;
+	}  
 
-	while (z_disp[k] < zeRef)
-	{
-		k++;
-		z_disp[k] = z_disp[k-1]+input_info.d;
-	} 
+	for ( z = rz ; z < zeRef ; z+=rz ){
+		z_disp[r] = z;
+		r++;
+	}   
 
-	for ( x = 0; x < i+1; x++ ){
-		for ( y = 0; y < j+1; y++ ){
-			for ( z = 0; z < k+1; z++ ){
-				ofs_list << x_disp[x]  << std::endl;
-				ofs_list << y_disp[y]  << std::endl;
-				ofs_list << z_disp[z]  << std::endl;
+	for ( x = 0; x <= p; x++ ){
+		for ( y = 0; y <= q; y++ ){
+			for ( z = 0; z <= r; z++ ){
+				Ref_list << x_disp[x]  << std::endl;
+				Ref_list << y_disp[y]  << std::endl;
+				Ref_list << z_disp[z]  << std::endl;
 			}
 		}
 	}
@@ -202,14 +190,12 @@ void main(int argc, char *argv[])
 	//計測点の座標をロード,listDispに代入
 	rbf_t::load_cordinates(input_info.dirBase +input_info. caseRef.dir + "/disp/" + input_info.caseRef.basename + ".txt", listDisp);
 
-
-
+	
 	//症例ループ
 	for(int i = 0; i < cases.size(); i++)
 	{
 		std::cout << "case : " << i + 1 << std::endl;
 
-		int ph = 3;
 
 		//浮動症例の情報を取得(サイズ，制御点など)
 		nari::mhd mhdFl;
@@ -233,8 +219,32 @@ void main(int argc, char *argv[])
 		mhdFlS.reso123(xrFlS, yrFlS, zrFlS);
 
 
+		//基準症例の読み込み
+		nari::vector<short> imgRef(xeRef * yeRef * zeRef);
+		mhdRef.save_mhd_and_image(imgRef, input_info.dirO + cases[i].dir + "org/" + cases[i].basename + "_3" + ".raw");
+		//浮動症例の読み込み
+		nari::vector<short> imgFl(xeFl * yeFl * zeFl);
+		mhdFl.load_mhd_and_image(imgFl, input_info.dirOrg + cases[i].dir + cases[i].basename + "_3" + ".raw");
+		//浮動症例の計測点を格納するベクトルを用意
+		nari::vector<int> x_disp2 (xeRef,0);
+		nari::vector<int> y_disp2 (yeRef,0);
+		nari::vector<int> z_disp2 (zeRef,0);
 
+		//テンプレートマッチング
+		template_mathcing(imgRef, imgFl ,x_disp ,y_disp ,z_disp ,x_disp2 ,y_disp2 ,z_disp2 ,xeRef,yeRef, zeRef,
+						 xeFl, yeFl, zeFl, input_info.tmp , rx ,ry, rz);
+		//テンプレートマッチングにより決定した対応点の座標をテキストに保存
+		std::ofstream Fl_list(input_info.dirDisp + cases[i].dir + "disp/" + cases[i].basename + ".txt");
 
+		for ( x = 0; x <= p; x++ ){
+			for ( y = 0; y <= q; y++ ){
+				for ( z = 0; z <= r; z++ ){
+					Fl_list << x_disp2[x]  << std::endl;
+					Fl_list << y_disp2[y]  << std::endl;
+					Fl_list << z_disp2[z]  << std::endl;
+				}
+			}
+		}
 		//テンプレートマッチングの浮動症例の計測点をロード
 		rbf_t::load_values(input_info.dirDisp + cases[i].dir + "disp/" + cases[i].basename + ".txt", listDisp);	//制御点のロード
 
@@ -283,10 +293,10 @@ void main(int argc, char *argv[])
 
 
 		nari::vector<short> imgI(xeFl * yeFl * zeFl), imgO(xeRef * yeRef * zeRef);
-		mhdFl.load_mhd_and_image(imgI, input_info.dirOrg + cases[i].dir + cases[i].basename + "_" + nari::string::tostring(ph) + ".mhd");
+		mhdFl.load_mhd_and_image(imgI, input_info.dirOrg + cases[i].dir + cases[i].basename + "_3" + ".mhd");
 
 		deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgI, imgO);
-		mhdRef.save_mhd_and_image(imgO, input_info.dirO + cases[i].dir + "org/" + cases[i].basename + "_" + nari::string::tostring(ph) + ".raw");
+		mhdRef.save_mhd_and_image(imgO, input_info.dirO + cases[i].dir + "org/" + cases[i].basename + "_3" + ".raw");
 
 		const	int nLabel = 8;
 		const	std::string	nameLabel[] = {"liver/", "heart/", "kidney/", "gallbladder/", "stomach/", "tumor/", "l_kidney/", "spleen/"};

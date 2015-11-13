@@ -20,7 +20,9 @@ struct text_info
 	std::string dirBase ;
 	nari::case_t caseRef;
 	int tmp ;
-	int m ;
+	int rangex ;
+	int rangey ;
+	int rangez ;
 	int d ;
 
 					
@@ -40,7 +42,9 @@ struct text_info
 		caseRef = (info.get_as_str("ref_file"),info.get_as_str("ref_name"));
 		
 		tmp = info.get_as_int("tmp_size");
-		m = info.get_as_int("search_range");
+		rangex = info.get_as_int("range_x");
+		rangey = info.get_as_int("range_y");
+		rangez = info.get_as_int("range_z");
 		d = info.get_as_int("search_interval");
 		
 		
