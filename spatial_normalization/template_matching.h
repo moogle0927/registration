@@ -1,3 +1,4 @@
+/*先頭で日本語を打ち込んでおけばソースツリーで表示したときに文字化けしないらしいので*/
 #ifndef __TEMPLATE_MATCHONG__
 #define __TEMPLATE_MATCHONG__
 
