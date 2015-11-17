@@ -1,3 +1,5 @@
+/*先頭で日本語を打ち込んでおけばソースツリーで表示したときに文字化けしないらしいので*/
+
 #ifndef __INFO__
 #define __INFO__
 
@@ -35,17 +37,17 @@ struct text_info
 		set = info.get_as_str("set");
 		pathId = nari::file::add_delim(info.get_as_str("case"));
 		pathId += set;
-		dirOrg = nari::file::add_delim(info.get_as_str("out"))+info.get_as_str("01-01");
-		dirDisp = nari::file::add_delim(info.get_as_str("out"))+info.get_as_str("07-01");
+		dirOrg = nari::file::add_delim(info.get_as_str("case"));
+		dirDisp = nari::file::add_delim(info.get_as_str("out"));
 		dirO = nari::file::add_delim(info.get_as_str("forLearn"))+info.get_as_str("labelStd");
 		dirBase = dirDisp;
-		caseRef = (info.get_as_str("ref_file"),info.get_as_str("ref_name"));
+		caseRef = (info.get_as_str("caseref"));
 		
 		tmp = info.get_as_int("tmp_size");
 		rangex = info.get_as_int("range_x");
 		rangey = info.get_as_int("range_y");
 		rangez = info.get_as_int("range_z");
-		d = info.get_as_int("search_interval");
+
 		
 		
 
