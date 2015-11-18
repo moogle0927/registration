@@ -12,15 +12,16 @@
 struct text_info
 {
 	
-	std::string dirLabel;         
+;         
 	std::string set;          
 	std::string pathId;          
 	std::string case_list; 
-	std::string dirOrg ;
-	std::string dirDisp;
+
 	std::string dirO ;
-	std::string dirBase ;
-	nari::case_t caseRef;
+	std::string dirRef ;
+	std::string dirFl ;
+	std::string caseRef_dir;
+	std::string caseRef_name;
 	int tmp ;
 	int rangex ;
 	int rangey ;
@@ -33,16 +34,17 @@ struct text_info
 		nari::infocontroller info;
 		info.load(path);
 
-		dirLabel = nari::file::add_delim(info.get_as_str("in"));
-		set = info.get_as_str("set");
-		pathId = nari::file::add_delim(info.get_as_str("case"));
+		dirRef = nari::file::add_delim(info.get_as_str("dir_ref"));
+		dirFl = nari::file::add_delim(info.get_as_str("dir_fl"));
+		set = info.get_as_str("casefl");
+		pathId = nari::file::add_delim(info.get_as_str("dir_fl"));
 		pathId += set;
-		dirOrg = nari::file::add_delim(info.get_as_str("case"));
-		dirDisp = nari::file::add_delim(info.get_as_str("out"));
-		dirO = nari::file::add_delim(info.get_as_str("forLearn"))+info.get_as_str("labelStd");
-		dirBase = dirDisp;
-		caseRef = (info.get_as_str("caseref"));
 		
+		dirO = nari::file::add_delim(info.get_as_str("output"));
+		
+		caseRef_dir = info.get_as_str("caseref_dir");
+		caseRef_name = info.get_as_str("caseref_name");
+	
 		tmp = info.get_as_int("tmp_size");
 		rangex = info.get_as_int("range_x");
 		rangey = info.get_as_int("range_y");

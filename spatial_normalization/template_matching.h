@@ -16,7 +16,8 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 	int tmp_size = (tmp*2+1)*(tmp*2+1)*(tmp*2+1);
 
 	//読み見込んだ計測点すべてを走査するループ
-	#pragma omp parallel for schedule(dynamic) num_threads(2)
+	//※※NMIの関数を使うとなぜか並列化で値が混ざるのでNMIを使用する際は並列化は外してください※※
+	#pragma omp parallel for schedule(dynamic) num_threads(8)
 	for (int a = 0 ; a < disp_num ; a++ ){
 		nari::vector<int> disp(3);
 		nari::vector<unsigned short> tmp_Ref(tmp_size);
@@ -46,10 +47,13 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 		std::cout << "(^^)<テンプレート作った" <<std::endl;
 
 		//評価値最大値と対応点の座標を格納する変数を定義
-
+		//相互情報量の最大値を格納する変数を定義
 		//double nmi_max = 0;
+
 		//相関係数を格納する変数を定義
 		double cc = 0, cc_max = 0;
+
+		//対応点の座標を入れる変数
 		int xs,ys,zs;
 
 		//テンプレートマッチング開始
@@ -78,7 +82,7 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 						}
 					}
 
-					//平均をだす
+					//ここからテンプレート同士の相関係数を計算
 					double meanref = 0.0, meanfl =0.0;
 					for ( int c=0 ; c<tmp_size ; c++){
 						meanref += tmp_Ref[c]/tmp_size;
@@ -92,8 +96,9 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 						cov    += (tmp_Ref[c]-meanref)*(tmp_Fl[c]-meanfl);
 					}
 
-					cc = abs(cov/(sqrt(stdref)*sqrt(stdfl)));
+					cc = cov/(sqrt(stdref)*sqrt(stdfl));
 
+					//相関係数が最大値をとるときの座標を保存
 					if (cc > cc_max){
 						cc_max = cc;
 						xs = DispRef[a][0] - rangex + i;
@@ -101,10 +106,18 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 						zs = DispRef[a][2] - rangez + k;
 					}
 
-					////NMIを評価
+					////NMI(相互情報量)による評価
 					//double nmi = calc_NMI(tmp_Ref, tmp_Fl); //NMI（基準症例vs浮動症例）
+					//現在最大のnmiより大きければ対応点の座標を更新
+					/*if (nmi > nmi_max){
+						nmi_max = nmi;
+						xs = DispRef[a][0] - rangex + i;
+						ys = DispRef[a][1] - rangey + j;
+						zs = DispRef[a][2] - rangez + k;
+					}*/
 
-					//完全に一致したときだけ
+
+					//完全に一致したときだけ対応点とする(TMのデバッグにどうぞ)
 					/*int count = 0;
 					for ( int c=0 ; c<u ; c++){
 						int X = tmp_Ref[c]-tmp_Fl[c];
@@ -116,17 +129,6 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 						zs = DispRef[a][2] - rangez + k;
 					}*/
 
-					
-					//現在最大のnmiより大きければ対応点の座標を更新
-					/*if (nmi > nmi_max){
-						nmi_max = nmi;
-						xs = DispRef[a][0] - rangex + i;
-						ys = DispRef[a][1] - rangey + j;
-						zs = DispRef[a][2] - rangez + k;
-					}*/
-					/*std::cout << "a=" << a <<std::endl;
-					std::cout<<"i= "<<i<<" j= "<<j<<" k= "<<k<<std::endl; 
-					system("pause");*/
 				}
 
 			}
@@ -135,12 +137,12 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 		disp[0] = xs;
 		disp[1] = ys;
 		disp[2] = zs;
-		DispFl.push_back(disp);
+		DispFl[a] = (disp);
 
 		std::cout << "(^^)<探索点みつけた" <<std::endl;
 		std::cout << "a=" << a <<std::endl;
 		std::cout << "x=" << DispRef[a][0] << " y=" << DispRef[a][1] <<" z=" << DispRef[a][2] <<std::endl;
-		std::cout << "xs=" << xs << " ys=" << ys <<" zs=" << zs <<std::endl;
+		std::cout << "xs=" << DispFl[a][0] << " ys=" << DispFl[a][1] <<" zs=" << DispFl[a][2] <<std::endl;
 	}
 }
 #endif
