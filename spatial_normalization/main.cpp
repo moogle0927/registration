@@ -48,6 +48,8 @@ void deformation_using_movement(int xeRef, int yeRef, int zeRef, int xeFl, int y
 	}
 }
 template <class LABEL_T>
+
+//この処理はとりあえず要らない
 void voxelization(nari::mhd &mhdLabel, nari::vector<LABEL_T> &imgLabel)
 {
 
@@ -336,9 +338,10 @@ void main(int argc, char *argv[])
 		mhdLabel.load_mhd_and_image(imgLabel, oss.str());
 		//voxelization(mhdLabel, imgLabel);
 		mhdLabel.size123(xeFl, yeFl, zeFl);
-		mhdLabel.save_mhd_and_image(imgLabel, input_info.dirO + cases[i].dir + "cutlabel/" + cases[i].basename + "_label.raw");
+		//mhdLabel.save_mhd_and_image(imgLabel, input_info.dirO + cases[i].dir + "cutlabel/" + cases[i].basename + "_label.raw");
 
 		// 距離変換
+		//なぜかラベル画像の最初と最後のスライスに０を強制的に入れているので消してみた
 		//for( int s = 0; s < xeFl * yeFl; s++)	imgLabel[s] = 0;
 		//for( int s = xeFl * yeFl * ( zeFl - 1); s < xeFl * yeFl * zeFl; s++)	imgLabel[s] = 0;
 		nari::vector<float> imgLabelDist(xeFl * yeFl * zeFl), imgLabelDistO(xeRef * yeRef * zeRef);
