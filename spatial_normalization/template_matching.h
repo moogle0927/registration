@@ -38,6 +38,7 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 					//テンプレート内の画素を0～32に正規化
 					//tmp_Ref[t] = imgRef[s]*32/65535;
 					tmp_Ref[t] = imgRef[s];
+					std::cout << tmp_Ref[t] ;
 					t++;
 
 				}
@@ -57,9 +58,9 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 		int xs,ys,zs;
 
 		//テンプレートマッチング開始
-		for (int k = tmp; k < rangez * 2+1 -tmp ; k++){
-			for (int j = tmp; j < rangey * 2+1 -tmp ; j++){
-				for (int i = tmp; i < rangex * 2+1 -tmp ; i++){
+		for (int k = 0; k < rangez * 2+1 ; k++){
+			for (int j = 0; j < rangey * 2+1 ; j++){
+				for (int i = 0; i < rangex * 2+1 ; i++){
 					nari::vector<unsigned short> tmp_Fl(tmp_size);
 					int u=0;
 					//位置合わせされる側の画像テンプレート作成
@@ -70,12 +71,16 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 								int y = DispRef[a][1] - rangey + j - tmp + q;
 								int z = DispRef[a][2] - rangez + k - tmp + r;
 								//テンプレートが画像からはみ出た場合は折り返した画像を入れる
+								if ( x < 0 ) x =  -x;
+								if ( y < 0 ) y =  -y;
+								if ( z < 0 ) z =  -z;
 								if ( x > xeFl-1 ) x = 2*(xeFl-1) -x;
 								if ( y > yeFl-1 ) y = 2*(yeFl-1) -y;
 								if ( z > zeFl-1 ) z = 2*(zeFl-1) -z;
 								int s = xeFl*yeFl*z + xeFl*y + x;
 								//tmp_Fl[u] = imgFl[s]*32/65535;
 								tmp_Fl[u] = imgFl[s];
+
 								u++;
 
 							}
@@ -85,10 +90,12 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 					//ここからテンプレート同士の相関係数を計算
 					double meanref = 0.0, meanfl =0.0;
 					for ( int c=0 ; c<tmp_size ; c++){
-						meanref += tmp_Ref[c]/tmp_size;
-						meanfl += tmp_Fl[c]/tmp_size;
+						meanref += tmp_Ref[c];
+						meanfl += tmp_Fl[c];
 					}
-
+					meanref = meanref/tmp_size;
+					meanfl = meanfl/tmp_size;
+					
 					double stdref = 0.0,stdfl = 0.0,cov = 0.0;
 					for ( int c=0 ; c<tmp_size ; c++){
 						stdref += (tmp_Ref[c]-meanref)*(tmp_Ref[c]-meanref);
@@ -99,13 +106,24 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 					cc = cov/(sqrt(stdref)*sqrt(stdfl));
 
 					//相関係数が最大値をとるときの座標を保存
-					if (cc > cc_max){
+				
+					if (cc >= cc_max){
 						cc_max = cc;
 						xs = DispRef[a][0] - rangex + i;
 						ys = DispRef[a][1] - rangey + j;
 						zs = DispRef[a][2] - rangez + k;
+						//std::cout<<"cc="<<cc << std::endl;
+						for(int t=0; t<tmp_Fl.size() ; t++){
+					}
 					}
 
+					//相関係数が１のときのみ採用(デバッグ)
+					/*if (cc == 1){
+						xs = DispRef[a][0] - rangex + i;
+						ys = DispRef[a][1] - rangey + j;
+						zs = DispRef[a][2] - rangez + k;
+					}
+*/
 					////NMI(相互情報量)による評価
 					//double nmi = calc_NMI(tmp_Ref, tmp_Fl); //NMI（基準症例vs浮動症例）
 					//現在最大のnmiより大きければ対応点の座標を更新

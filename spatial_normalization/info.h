@@ -37,7 +37,7 @@ struct text_info
 		dirRef = nari::file::add_delim(info.get_as_str("dir_ref"));
 		dirFl = nari::file::add_delim(info.get_as_str("dir_fl"));
 		set = info.get_as_str("casefl");
-		pathId = nari::file::add_delim(info.get_as_str("dir_fl"));
+		pathId = nari::file::add_delim(info.get_as_str("dir_txt"));
 		pathId += set;
 		
 		dirO = nari::file::add_delim(info.get_as_str("output"));

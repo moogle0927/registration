@@ -155,6 +155,8 @@ void main(int argc, char *argv[])
 	nari::vector<unsigned char> imgLabel(xeRef * yeRef * zeRef);
 	imgLabel.load_file_bin(input_info.dirRef  +   input_info.caseRef_dir +  input_info.caseRef_name+ "_label.raw");
 
+	std::cout <<"(´・ω・)"<<imgLabel.size() <<  std::endl;
+
 	int rx = input_info.rangex;
 	int ry = input_info.rangey;
 	int rz = input_info.rangez;
@@ -171,9 +173,9 @@ void main(int argc, char *argv[])
 	std::ofstream Ref_list(input_info.dirRef + input_info.caseRef_dir+ "disp/" + input_info.caseRef_name + ".txt");
 	
 	//まずは格子状に仮の探索点をとる
-	for ( int x = rx ; x < xeRef ; x += rx*2+1 ){
-		for ( int y = ry ; y < yeRef ; y += ry*2+1 ){
-			for ( int z = rz ; z < zeRef ; z += rz*2+1 ){
+	for ( int x = rx ; x < xeRef-rx ; x += rx*2+1 ){
+		for ( int y = ry ; y < yeRef-ry ; y += ry*2+1 ){
+			for ( int z = rz ; z < zeRef-rz ; z += rz*2+1 ){
 				//とった点でテンプレートを作成してみる
 				nari::vector<unsigned short> tmp_Ref(tmp_size);
 				nari::vector<unsigned char> tmp_label(tmp_size);
@@ -195,6 +197,7 @@ void main(int argc, char *argv[])
 						}
 					}
 				}
+
 				//テンプレート内の濃度値がすべて０以下なら探索点として採用しない
 				int count =0;
 				for(int l=0 ; l<t ;l++){
@@ -332,25 +335,26 @@ void main(int argc, char *argv[])
 		nari::mhd mhdLabel;
 		std::ostringstream oss;
 		oss << input_info.dirRef << cases[i].dir + cases[i].basename << "_label.mhd";
-
+		std::cout<< "(｀・ω・´)" <<  std::endl;
 		if( !nari::system::file_is_exist(oss.str()) ) continue;
 		//基準症例のラベルを読み込み,等方化,縮小処理をして保存
 		mhdLabel.load_mhd_and_image(imgLabel, oss.str());
+		std::cout<< "(｀・ω・´)" <<  std::endl;
 		//voxelization(mhdLabel, imgLabel);
 		mhdLabel.size123(xeFl, yeFl, zeFl);
 		//mhdLabel.save_mhd_and_image(imgLabel, input_info.dirO + cases[i].dir + "cutlabel/" + cases[i].basename + "_label.raw");
-
+		std::cout<< "(｀・ω・´)" <<  std::endl;
 		// 距離変換
 		//なぜかラベル画像の最初と最後のスライスに０を強制的に入れているので消してみた
 		//for( int s = 0; s < xeFl * yeFl; s++)	imgLabel[s] = 0;
 		//for( int s = xeFl * yeFl * ( zeFl - 1); s < xeFl * yeFl * zeFl; s++)	imgLabel[s] = 0;
 		nari::vector<float> imgLabelDist(xeFl * yeFl * zeFl), imgLabelDistO(xeRef * yeRef * zeRef);
 		nari::distance::euclidean_signed_distance_transform(imgLabel.ptr(), imgLabelDist.ptr(), xeFl, yeFl, zeFl);
-
+		std::cout<< "(｀・ω・´)" <<  std::endl;
 		//変形
 		deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgLabelDist, imgLabelDistO);
 		oss.str("");
-
+		std::cout<< "(｀・ω・´)" <<  std::endl;
 		//距離画像の閾値処理
 		nari::vector<unsigned char> imgLabelO(xeRef * yeRef * zeRef, 0);
 		for(int s = 0; s < xeRef * yeRef * zeRef; s++)
@@ -358,11 +362,12 @@ void main(int argc, char *argv[])
 			if(imgLabelDistO[s] < 0) imgLabelO[s] = 1;
 		}
 		oss.str("");
-
+		std::cout<< "(｀・ω・´)" <<  std::endl;
 		//ラベルの保存
 		oss << input_info.dirO << cases[i].dir + "normalized_label/" + cases[i].basename << ".raw";
 		mhdRef.save_mhd_and_image(imgLabelO, oss.str());
 
 
+		
 	}
 }
