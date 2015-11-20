@@ -38,7 +38,7 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 					//テンプレート内の画素を0～32に正規化
 					//tmp_Ref[t] = imgRef[s]*32/65535;
 					tmp_Ref[t] = imgRef[s];
-					std::cout << tmp_Ref[t] ;
+					//std::cout << tmp_Ref[t] ;
 					t++;
 
 				}
@@ -103,7 +103,11 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 						cov    += (tmp_Ref[c]-meanref)*(tmp_Fl[c]-meanfl);
 					}
 
-					cc = cov/(sqrt(stdref)*sqrt(stdfl));
+					//分散0になると分母が0になるのでスキップ
+					if (stdfl != 0) {
+						cc = cov / (sqrt(stdref)*sqrt(stdfl));
+					}
+					
 
 					//相関係数が最大値をとるときの座標を保存
 				
@@ -112,9 +116,8 @@ void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &i
 						xs = DispRef[a][0] - rangex + i;
 						ys = DispRef[a][1] - rangey + j;
 						zs = DispRef[a][2] - rangez + k;
-						//std::cout<<"cc="<<cc << std::endl;
-						for(int t=0; t<tmp_Fl.size() ; t++){
-					}
+						std::cout << "stdref=" << stdref << std::endl;
+						std::cout<<"cc="<<cc << std::endl;
 					}
 
 					//相関係数が１のときのみ採用(デバッグ)
