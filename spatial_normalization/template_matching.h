@@ -7,7 +7,7 @@
 #include <omp.h>
 
 template <class T , class M>
-void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &imgFl ,const nari::vector<nari::vector<int>> &DispRef,
+void template_mathcing ( const nari::vector<T> &imgRef, const nari::vector<M> &imgRefFl,const nari::vector<nari::vector<int>> &DispRef,
 	nari::vector<nari::vector<int>> &DispFl,int xeRef, int yeRef, int zeRef,int xeFl, int yeFl, int zeFl, 
 	int tmp ,int rangex ,int rangey, int rangez)
 {
