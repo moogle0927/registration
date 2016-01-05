@@ -27,6 +27,7 @@ struct text_info
 	int rangey ;
 	int rangez ;
 	int d ;
+	double lamb;
 
 					
 	inline void input(const std::string &path) // テキストから入力情報を書き込み
@@ -49,9 +50,8 @@ struct text_info
 		rangex = info.get_as_int("range_x");
 		rangey = info.get_as_int("range_y");
 		rangez = info.get_as_int("range_z");
+		lamb = info.get_as_double("lamb");
 
-		
-		
 
 		info.output();
 	}

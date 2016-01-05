@@ -110,129 +110,33 @@ void main(int argc, char *argv[])
 	typedef rbf_t::disp_list_t disp_list_t_3;
 
 
-//テキストでpathもテンプレートマッチングのパラメータも読めるようにしました
-if (argc != 2)
-{
-	std::cout << "usage : make_filter.exe input_info.txt" << std::endl << "Hit enter-key to exit...";
-	getchar();
-	exit(1);
-}
-
-text_info input_info;
-input_info.input(argv[1]);
-
-// information of case
-nari::case_list_t cases;
-cases.load_file_txt(input_info.pathId, true);
-
-//基準症例の情報を取得(サイズ，制御点など)
-nari::mhd mhdRef;
-disp_list_t_3 listDisp;
-mhdRef.load(input_info.dirRef + input_info.caseRef_dir + input_info.caseRef_name + ".mhd");
-
-int xeRef = mhdRef.size1();
-int yeRef = mhdRef.size2();
-int zeRef = mhdRef.size3();
-double xrRef = mhdRef.reso1();
-double yrRef = mhdRef.reso2();
-double zrRef = mhdRef.reso3();
-const double shrinkValue = 3.0;	//1/3に縮小します
-int xeRefS = (int)(xeRef / shrinkValue + 0.5);
-int yeRefS = (int)(yeRef / shrinkValue + 0.5);
-int zeRefS = (int)(zeRef / shrinkValue + 0.5);
-double xrRefS = xrRef * (double)xeRef / xeRefS;
-double yrRefS = yrRef * (double)yeRef / yeRefS;
-double zrRefS = zrRef * (double)zeRef / zeRefS;
-
-nari::mhd mhdRefS;
-mhdRefS = mhdRef;
-mhdRefS.size123(xeRefS, yeRefS, zeRefS);
-mhdRefS.reso123(xrRefS, yrRefS, zrRefS);
-
-//基準症例の読み込み
-nari::vector<unsigned short> imgRef(xeRef * yeRef * zeRef);
-imgRef.load_file_bin(input_info.dirRef + input_info.caseRef_dir + input_info.caseRef_name + ".raw");
-nari::vector<unsigned char> imgLabel(xeRef * yeRef * zeRef);
-imgLabel.load_file_bin(input_info.dirRef + input_info.caseRef_dir + input_info.caseRef_name + "_label.raw");
-
-std::cout << "(´・ω・)" << imgLabel.size() << std::endl;
-
-int rx = input_info.rangex;
-int ry = input_info.rangey;
-int rz = input_info.rangez;
-
-int tmp = input_info.tmp;
-int tmp_size = (tmp * 2 + 1)*(tmp * 2 + 1)*(tmp * 2 + 1);
-
-//探索点を格納するベクターを用意
-nari::vector<int> disp(3);
-nari::vector<nari::vector<int>> DispRef;
-int m = 0;
-
-//ここから基準症例のテンプレートマッチングを行う計測点の座標を算出,　保存
-std::ofstream Ref_list(input_info.dirRef + input_info.caseRef_dir + "disp/" + input_info.caseRef_name + ".txt");
-
-//まずは格子状に仮の探索点をとる
-for (int x = rx; x < xeRef - rx; x += rx * 2 + 1) {
-	for (int y = ry; y < yeRef - ry; y += ry * 2 + 1) {
-		for (int z = rz; z < zeRef - rz; z += rz * 2 + 1) {
-			//とった点でテンプレートを作成してみる
-			nari::vector<unsigned short> tmp_Ref(tmp_size);
-			nari::vector<unsigned char> tmp_label(tmp_size);
-			int t = 0;
-			for (int r = 0; r < 2 * tmp + 1; r++) {
-				for (int q = 0; q < 2 * tmp + 1; q++) {
-					for (int p = 0; p < 2 * tmp + 1; p++) {
-						int xtmp = x - tmp + p;
-						int ytmp = y - tmp + q;
-						int ztmp = z - tmp + r;
-						//テンプレートが画像からはみ出た場合は折り返した画像を入れる
-						if (x > xeRef - 1) x = 2 * (xeRef - 1) - x;
-						if (y > yeRef - 1) y = 2 * (yeRef - 1) - y;
-						if (z > zeRef - 1) z = 2 * (zeRef - 1) - z;
-						int s = xeRef*yeRef*ztmp + xeRef*ytmp + xtmp;
-						tmp_label[t] = imgLabel[s];
-						tmp_Ref[t] = imgRef[s];
-						t++;
-					}
-				}
-			}
-
-
-			//テンプレート内のにラベル=1になる画素が存在しなければ採用しない
-			int count = 0;
-			for (int l = 0; l < t; l++) {
-				if (tmp_label[l] == 1) count++;
-			}
-			if (count != 0) {
-					//テンプレート内の分散を計算してみて0でなければ採用
-					double meanref = 0.0;
-					double stdref = 0.0;
-					for (int c = 0; c < tmp_size; c++) {
-						meanref += tmp_Ref[c];
-					}
-					meanref = meanref / tmp_size;
-					for (int c = 0; c < tmp_size; c++) {
-						stdref += (tmp_Ref[c] - meanref)*(tmp_Ref[c] - meanref);
-					}
-					//std::cout << stdref << std::endl;
-					if (stdref != 0.0) {
-						//座標をRef_listにテキストとして保存
-						Ref_list << x << std::endl;
-						Ref_list << y << std::endl;
-						Ref_list << z << std::endl;
-						//ベクターにも保存(テンプレートマッチング用)
-						disp[0] = x;
-						disp[1] = y;
-						disp[2] = z;
-						DispRef.push_back(disp);
-						m++;
-					}
-				}
-			}
-		}
+	//テキストでpathもテンプレートマッチングのパラメータも読めるようにしました
+	if (argc != 2)
+	{
+		std::cout << "usage : make_filter.exe input_info.txt" << std::endl << "Hit enter-key to exit...";
+		getchar();
+		exit(1);
 	}
 
+	text_info input_info;
+	input_info.input(argv[1]);
+
+	// information of case
+	nari::case_list_t cases;
+	cases.load_file_txt(input_info.pathId, true);
+
+	//基準症例の情報を取得(サイズ，制御点など)
+	nari::mhd mhdRef;
+	disp_list_t_3 listDisp;
+	mhdRef.load(input_info.dirRef + input_info.caseRef_dir + input_info.caseRef_name + ".mhd");
+
+	int xeRef = mhdRef.size1();
+	int yeRef = mhdRef.size2();
+	int zeRef = mhdRef.size3();
+	double xrRef = mhdRef.reso1();
+	double yrRef = mhdRef.reso2();
+	double zrRef = mhdRef.reso3();
+		
 	//計測点の座標をロード,listDispに代入
 	rbf_t::load_cordinates(input_info.dirRef + input_info.caseRef_dir + "disp/" + input_info.caseRef_name + ".txt", listDisp);
 
@@ -252,58 +156,24 @@ for (int x = rx; x < xeRef - rx; x += rx * 2 + 1) {
 		double xrFl = mhdFl.reso1();
 		double yrFl = mhdFl.reso2();
 		double zrFl = mhdFl.reso3();
-		int xeFlS = (int)(xeFl / shrinkValue + 0.5);
-		int yeFlS = (int)(yeFl / shrinkValue + 0.5);
-		int zeFlS = (int)(zeFl / shrinkValue + 0.5);
-		double xrFlS = xrFl * (double)xeFl / xeFlS;
-		double yrFlS = yrFl * (double)yeFl / yeFlS;
-		double zrFlS = zrFl * (double)zeFl / zeFlS;
-
-		nari::mhd mhdFlS;
-		mhdFlS = mhdFl;
-		mhdFlS.size123(xeFlS, yeFlS, zeFlS);
-		mhdFlS.reso123(xrFlS, yrFlS, zrFlS);
 
 		std::cout << "(^^)<画像読み込むよ" << std::endl;
 
-		//浮動症例の読み込み
-		nari::vector<unsigned short> imgFl(xeFl * yeFl * zeFl);
-		imgFl.load_file_bin(input_info.dirFl + cases[i].dir + cases[i].basename + ".raw");
-		//浮動症例の計測点を格納するベクトルを用意
-		nari::vector<nari::vector<int>> DispFl(DispRef.size());
-		std::cout << "(^^)<TMするよ" << std::endl;
-		//テンプレートマッチング
-		template_mathcing(imgRef, imgFl, DispRef, DispFl, xeRef, yeRef, zeRef,
-			xeFl, yeFl, zeFl, input_info.tmp, rx, ry, rz);
-		std::cout << "～テンプレートマッチング終了<(_ _)>～" << std::endl;
-		//テンプレートマッチングにより決定した対応点の座標をテキストに保存
-		std::ofstream Fl_list(input_info.dirFl + cases[i].dir + "disp/" + cases[i].basename + ".txt");
-		std::cout << "探索結果をテキストに保存するよ" << std::endl;
-		int xs, ys, zs;
-		for (int k = 0; k < DispRef.size(); k++) {
-			xs = DispFl[k][0];
-			ys = DispFl[k][1];
-			zs = DispFl[k][2];
-			Fl_list << xs << std::endl;
-			Fl_list << ys << std::endl;
-			Fl_list << zs << std::endl;
-		}
-		std::cout << "保存した" << std::endl;
-		//テンプレートマッチングの浮動症例の計測点をロード
+		//浮動症例の計測点をロード
 		rbf_t::load_values(input_info.dirFl + cases[i].dir + "disp/" + cases[i].basename + ".txt", listDisp);	//制御点のロード
 		std::cout << "ロード完了" << std::endl;
-		mist::matrix<double> wMat = rbf_t::get_w_mat(listDisp, nari::rbf_kernel::biharmonic());
-		std::cout << "ここまで()" << std::endl;
+		mist::matrix<double> wMat = rbf_t::get_w_mat(listDisp, nari::rbf_kernel::biharmonic(), input_info.lamb);
+		std::cout << wMat << std::endl;
 
 		//移動場格納用（基準症例の座標から対応する浮動症例の座標を取得）
-		nari::vector<float> imgMoveX(xeRefS * yeRefS * zeRefS);
-		nari::vector<float> imgMoveY(xeRefS * yeRefS * zeRefS);
-		nari::vector<float> imgMoveZ(xeRefS * yeRefS * zeRefS);
+		nari::vector<float> imgMoveX(xeRef * yeRef * zeRef);
+		nari::vector<float> imgMoveY(xeRef * yeRef * zeRef);
+		nari::vector<float> imgMoveZ(xeRef * yeRef * zeRef);
 
 		{
-			int xe = xeRefS;
-			int ye = yeRefS;
-			int ze = zeRefS;
+			int xe = xeRef;
+			int ye = yeRef;
+			int ze = zeRef;
 			double sX = (double)xeRef / xe;
 			double sY = (double)yeRef / ye;
 			double sZ = (double)zeRef / ze;
@@ -326,15 +196,9 @@ for (int x = rx; x < xeRef - rx; x += rx * 2 + 1) {
 		}
 		std::cout << std::endl;
 		//↓以下に点ごとの移動した座標を格納する
-		mhdRefS.save_mhd_and_image(imgMoveX, input_info.dirO + cases[i].dir + "move/" + "x/" + cases[i].basename + ".raw");
-		mhdRefS.save_mhd_and_image(imgMoveY, input_info.dirO + cases[i].dir + "move/" + "y/" + cases[i].basename + ".raw");
-		mhdRefS.save_mhd_and_image(imgMoveZ, input_info.dirO + cases[i].dir + "move/" + "z/" + cases[i].basename + ".raw");
-
-		//線形変換，nari::interpolate::linearではnari型のvectorからmist型のarrayか何かに変換,mistの線形補間を使用している
-		//xeRefは元のサイズ，xerefsは1/3の大きさ，1/3の大きさの画像を元のサイズに戻している
-		nari::interpolate::linear(imgMoveX, imgMoveX, xeRefS, yeRefS, zeRefS, xeRef, yeRef, zeRef);
-		nari::interpolate::linear(imgMoveY, imgMoveY, xeRefS, yeRefS, zeRefS, xeRef, yeRef, zeRef);
-		nari::interpolate::linear(imgMoveZ, imgMoveZ, xeRefS, yeRefS, zeRefS, xeRef, yeRef, zeRef);
+		mhdRef.save_mhd_and_image(imgMoveX, input_info.dirO + cases[i].dir + "move/" + "x/" + cases[i].basename + ".raw");
+		mhdRef.save_mhd_and_image(imgMoveY, input_info.dirO + cases[i].dir + "move/" + "y/" + cases[i].basename + ".raw");
+		mhdRef.save_mhd_and_image(imgMoveZ, input_info.dirO + cases[i].dir + "move/" + "z/" + cases[i].basename + ".raw");
 
 		//imgIに浮動症例を読み込んでimgOに
 		nari::vector<unsigned short> imgI(xeFl * yeFl * zeFl), imgO(xeRef * yeRef * zeRef);
@@ -347,27 +211,24 @@ for (int x = rx; x < xeRef - rx; x += rx * 2 + 1) {
 		nari::vector<unsigned char> imgLabel;
 		nari::mhd mhdLabel;
 		std::ostringstream oss;
-		oss << input_info.dirRef << cases[i].dir + cases[i].basename << "_label.mhd";
-		std::cout << "(｀・ω・´)" << std::endl;
+		oss << input_info.dirFl << cases[i].dir + cases[i].basename << "_label.mhd";
+
+		std::cout <<oss.str() << std::endl;
 		if (!nari::system::file_is_exist(oss.str())) continue;
-		//基準症例のラベルを読み込み,等方化,縮小処理をして保存
 		mhdLabel.load_mhd_and_image(imgLabel, oss.str());
-		std::cout << "(｀・ω・´)" << std::endl;
-		//voxelization(mhdLabel, imgLabel);
 		mhdLabel.size123(xeFl, yeFl, zeFl);
-		//mhdLabel.save_mhd_and_image(imgLabel, input_info.dirO + cases[i].dir + "cutlabel/" + cases[i].basename + "_label.raw");
-		std::cout << "(｀・ω・´)" << std::endl;
+
 		// 距離変換
-		//なぜかラベル画像の最初と最後のスライスに０を強制的に入れているので消してみた
-		//for( int s = 0; s < xeFl * yeFl; s++)	imgLabel[s] = 0;
-		//for( int s = xeFl * yeFl * ( zeFl - 1); s < xeFl * yeFl * zeFl; s++)	imgLabel[s] = 0;
 		nari::vector<float> imgLabelDist(xeFl * yeFl * zeFl), imgLabelDistO(xeRef * yeRef * zeRef);
 		nari::distance::euclidean_signed_distance_transform(imgLabel.ptr(), imgLabelDist.ptr(), xeFl, yeFl, zeFl);
+		mhdRef.save_mhd_and_image(imgLabelDist, input_info.dirO + cases[i].dir + "LS/" + cases[i].basename + ".raw");
 		std::cout << "(｀・ω・´)" << std::endl;
 		//変形
 		deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgLabelDist, imgLabelDistO);
 		oss.str("");
+
 		std::cout << "(｀・ω・´)" << std::endl;
+
 		//距離画像の閾値処理
 		nari::vector<unsigned char> imgLabelO(xeRef * yeRef * zeRef, 0);
 		for (int s = 0; s < xeRef * yeRef * zeRef; s++)
@@ -375,7 +236,9 @@ for (int x = rx; x < xeRef - rx; x += rx * 2 + 1) {
 			if (imgLabelDistO[s] < 0) imgLabelO[s] = 1;
 		}
 		oss.str("");
+
 		std::cout << "(｀・ω・´)" << std::endl;
+
 		//ラベルの保存
 		oss << input_info.dirO << cases[i].dir + "normalized_label/" + cases[i].basename << ".raw";
 		mhdRef.save_mhd_and_image(imgLabelO, oss.str());
