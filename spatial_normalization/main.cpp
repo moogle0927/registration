@@ -194,7 +194,7 @@ void main(int argc, char *argv[])
 				}
 			}
 		}
-		std::cout << std::endl;
+		
 		//«ˆÈ‰º‚É“_‚²‚Æ‚ÌˆÚ“®‚µ‚½À•W‚ðŠi”[‚·‚é
 		mhdRef.save_mhd_and_image(imgMoveX, input_info.dirO + cases[i].dir + "move/" + "x/" + cases[i].basename + ".raw");
 		mhdRef.save_mhd_and_image(imgMoveY, input_info.dirO + cases[i].dir + "move/" + "y/" + cases[i].basename + ".raw");
@@ -240,7 +240,7 @@ void main(int argc, char *argv[])
 		std::cout << "(MEƒÖEL)" << std::endl;
 
 		//ƒ‰ƒxƒ‹‚Ì•Û‘¶
-		oss << input_info.dirO << cases[i].dir + "normalized_label/" + cases[i].basename << ".raw";
+		oss << input_info.dirO << cases[i].dir + "normalized_label/" + input_info.caseRef_name << "_nmlzd.raw";
 		mhdRef.save_mhd_and_image(imgLabelO, oss.str());
 
 
