@@ -121,6 +121,21 @@ void main(int argc, char *argv[])
 	text_info input_info;
 	input_info.input(argv[1]);
 
+	std::vector<int> s;
+	std::vector<int> d;
+	std::ifstream s_path(input_info.dir_s);
+	std::ifstream d_path(input_info.dir_d);
+	std::string buf_s;
+	std::string buf_d;
+	while (s_path&& getline(s_path, buf_s))
+	{
+		s.push_back(std::stoi(buf_s));
+	}
+	while (d_path&& getline(d_path, buf_d))
+	{
+		d.push_back(std::stoi(buf_d));
+	}
+
 	// information of case
 	nari::case_list_t cases;
 	cases.load_file_txt(input_info.pathId, true);
@@ -136,112 +151,120 @@ void main(int argc, char *argv[])
 	double xrRef = mhdRef.reso1();
 	double yrRef = mhdRef.reso2();
 	double zrRef = mhdRef.reso3();
-		
-	//計測点の座標をロード,listDispに代入
-	rbf_t::load_cordinates(input_info.dirRef + input_info.caseRef_dir + "disp/" + input_info.caseRef_name + ".txt", listDisp);
+	for (int j = 0; j < s.size(); j++) {
+		for (int k = 0; k < d.size(); k++) {
+			std::stringstream SD;
+			SD << "D" << d[k] << "S" << s[j] << "/";
+			//計測点の座標をロード,listDispに代入
+			rbf_t::load_cordinates(input_info.dirRef + input_info.caseRef_dir + "disp/" + SD.str() + input_info.caseRef_name + ".txt", listDisp);
 
-	//症例ループ
-	for (int i = 0; i < cases.size(); i++)
-	{
-		std::cout << "case : " << i + 1 << std::endl;
-
-		//浮動症例の情報を取得(サイズ，制御点など)
-		nari::mhd mhdFl;
-		mhdFl.load(input_info.dirFl + cases[i].dir + cases[i].basename + ".mhd");
-
-
-		int xeFl = mhdFl.size1();
-		int yeFl = mhdFl.size2();
-		int zeFl = mhdFl.size3();
-		double xrFl = mhdFl.reso1();
-		double yrFl = mhdFl.reso2();
-		double zrFl = mhdFl.reso3();
-
-		std::cout << "(^^)<画像読み込むよ" << std::endl;
-
-		//浮動症例の計測点をロード
-		rbf_t::load_values(input_info.dirFl + cases[i].dir + "disp/" + cases[i].basename + ".txt", listDisp);	//制御点のロード
-		std::cout << "ロード完了" << std::endl;
-		mist::matrix<double> wMat = rbf_t::get_w_mat(listDisp, nari::rbf_kernel::biharmonic(), input_info.lamb);
-		std::cout << wMat << std::endl;
-
-		//移動場格納用（基準症例の座標から対応する浮動症例の座標を取得）
-		nari::vector<float> imgMoveX(xeRef * yeRef * zeRef);
-		nari::vector<float> imgMoveY(xeRef * yeRef * zeRef);
-		nari::vector<float> imgMoveZ(xeRef * yeRef * zeRef);
-
-		{
-			int xe = xeRef;
-			int ye = yeRef;
-			int ze = zeRef;
-			double sX = (double)xeRef / xe;
-			double sY = (double)yeRef / ye;
-			double sZ = (double)zeRef / ze;
-			std::cout << "num Displacement : " << listDisp.size() << std::endl;
-			for (int z = 0; z < ze; z++)
+			//症例ループ
+			for (int i = 0; i < cases.size(); i++)
 			{
-				printf("z : [%5d/%5d]\r", z, ze - 1);
-				for (int y = 0; y < ye; y++)
+				std::cout << "case : " << i + 1 << std::endl;
+
+				//浮動症例の情報を取得(サイズ，制御点など)
+				nari::mhd mhdFl;
+				mhdFl.load(input_info.dirFl + cases[i].dir + cases[i].basename + ".mhd");
+
+
+				int xeFl = mhdFl.size1();
+				int yeFl = mhdFl.size2();
+				int zeFl = mhdFl.size3();
+				double xrFl = mhdFl.reso1();
+				double yrFl = mhdFl.reso2();
+				double zrFl = mhdFl.reso3();
+
+				std::cout << "(^^)<画像読み込むよ" << std::endl;
+
+
+				//浮動症例の計測点をロード
+				rbf_t::load_values(input_info.dirFl + cases[i].dir + "disp/" + cases[i].basename + ".txt", listDisp);	//制御点のロード
+				std::cout << "ロード完了" << std::endl;
+				mist::matrix<double> wMat = rbf_t::get_w_mat(listDisp, nari::rbf_kernel::biharmonic(), input_info.lamb);
+				std::cout << wMat << std::endl;
+
+				//移動場格納用（基準症例の座標から対応する浮動症例の座標を取得）
+				nari::vector<float> imgMoveX(xeRef * yeRef * zeRef);
+				nari::vector<float> imgMoveY(xeRef * yeRef * zeRef);
+				nari::vector<float> imgMoveZ(xeRef * yeRef * zeRef);
+
 				{
-					for (int x = 0; x < xe; x++)
+					int xe = xeRef;
+					int ye = yeRef;
+					int ze = zeRef;
+					double sX = (double)xeRef / xe;
+					double sY = (double)yeRef / ye;
+					double sZ = (double)zeRef / ze;
+					std::cout << "num Displacement : " << listDisp.size() << std::endl;
+					for (int z = 0; z < ze; z++)
 					{
-						int s = z * xe * ye + y * xe + x;
-						mist::matrix<double> cordinate = rbf_t::rbf_interpolation(listDisp, wMat, x * sX, y * sY, z * sZ, nari::rbf_kernel::biharmonic());
-						imgMoveX[s] = (float)cordinate[0];
-						imgMoveY[s] = (float)cordinate[1];
-						imgMoveZ[s] = (float)cordinate[2];
+						printf("z : [%5d/%5d]\r", z, ze - 1);
+						for (int y = 0; y < ye; y++)
+						{
+							for (int x = 0; x < xe; x++)
+							{
+								int s = z * xe * ye + y * xe + x;
+								mist::matrix<double> cordinate = rbf_t::rbf_interpolation(listDisp, wMat, x * sX, y * sY, z * sZ, nari::rbf_kernel::biharmonic());
+								imgMoveX[s] = (float)cordinate[0];
+								imgMoveY[s] = (float)cordinate[1];
+								imgMoveZ[s] = (float)cordinate[2];
+							}
+						}
 					}
 				}
+
+				//↓以下に点ごとの移動した座標を格納する
+				mhdRef.save_mhd_and_image(imgMoveX, input_info.dirO + cases[i].dir + "move/" + SD.str() + "x/" + cases[i].basename + ".raw");
+				mhdRef.save_mhd_and_image(imgMoveY, input_info.dirO + cases[i].dir + "move/" + SD.str() + "y/" + cases[i].basename + ".raw");
+				mhdRef.save_mhd_and_image(imgMoveZ, input_info.dirO + cases[i].dir + "move/" + SD.str() + "z/" + cases[i].basename + ".raw");
+
+				//imgIに浮動症例を読み込んでimgOに
+				nari::vector<unsigned short> imgI(xeFl * yeFl * zeFl), imgO(xeRef * yeRef * zeRef);
+				mhdFl.load_mhd_and_image(imgI, input_info.dirFl + cases[i].dir + cases[i].basename + ".mhd");
+				//浮動症例を基準症例に位置合わせ,変形後の原画像を保存
+				deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgI, imgO);
+				mhdRef.save_mhd_and_image(imgO, input_info.dirO + cases[i].dir + "org/" + SD.str() + cases[i].basename + ".raw");
+
+				//ラベルを変形していく
+				nari::vector<unsigned char> imgLabel;
+				nari::mhd mhdLabel;
+				std::ostringstream oss;
+				oss << input_info.dirFl << cases[i].dir + cases[i].basename << "_label.mhd";
+
+				std::cout << oss.str() << std::endl;
+				if (!nari::system::file_is_exist(oss.str())) continue;
+				mhdLabel.load_mhd_and_image(imgLabel, oss.str());
+				mhdLabel.size123(xeFl, yeFl, zeFl);
+
+				// 距離変換
+				nari::vector<float> imgLabelDist(xeFl * yeFl * zeFl), imgLabelDistO(xeRef * yeRef * zeRef);
+				nari::distance::euclidean_signed_distance_transform(imgLabel.ptr(), imgLabelDist.ptr(), xeFl, yeFl, zeFl);
+				mhdRef.save_mhd_and_image(imgLabelDist, input_info.dirO + cases[i].dir + "LS/" + cases[i].basename + ".raw");
+				std::cout << "(｀・ω・´)" << std::endl;
+				//変形
+				deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgLabelDist, imgLabelDistO);
+				oss.str("");
+
+				std::cout << "(｀・ω・´)" << std::endl;
+
+				//距離画像の閾値処理
+				nari::vector<unsigned char> imgLabelO(xeRef * yeRef * zeRef, 0);
+				for (int s = 0; s < xeRef * yeRef * zeRef; s++)
+				{
+					if (imgLabelDistO[s] < 0) imgLabelO[s] = 1;
+				}
+				oss.str("");
+
+				std::cout << "(｀・ω・´)" << std::endl;
+
+				//ラベルの保存
+				oss << input_info.dirO << cases[i].dir + "normalized_label/" + SD.str() + input_info.caseRef_name << "_nmlzd.raw";
+				mhdRef.save_mhd_and_image(imgLabelO, oss.str());
+
 			}
 		}
-		
-		//↓以下に点ごとの移動した座標を格納する
-		mhdRef.save_mhd_and_image(imgMoveX, input_info.dirO + cases[i].dir + "move/" + "x/" + cases[i].basename + ".raw");
-		mhdRef.save_mhd_and_image(imgMoveY, input_info.dirO + cases[i].dir + "move/" + "y/" + cases[i].basename + ".raw");
-		mhdRef.save_mhd_and_image(imgMoveZ, input_info.dirO + cases[i].dir + "move/" + "z/" + cases[i].basename + ".raw");
 
-		//imgIに浮動症例を読み込んでimgOに
-		nari::vector<unsigned short> imgI(xeFl * yeFl * zeFl), imgO(xeRef * yeRef * zeRef);
-		mhdFl.load_mhd_and_image(imgI, input_info.dirFl + cases[i].dir + cases[i].basename + ".mhd");
-		//浮動症例を基準症例に位置合わせ,変形後の原画像を保存
-		deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgI, imgO);
-		mhdRef.save_mhd_and_image(imgO, input_info.dirO + cases[i].dir + "org/" + cases[i].basename + ".raw");
-
-		//ラベルを変形していく
-		nari::vector<unsigned char> imgLabel;
-		nari::mhd mhdLabel;
-		std::ostringstream oss;
-		oss << input_info.dirFl << cases[i].dir + cases[i].basename << "_label.mhd";
-
-		std::cout <<oss.str() << std::endl;
-		if (!nari::system::file_is_exist(oss.str())) continue;
-		mhdLabel.load_mhd_and_image(imgLabel, oss.str());
-		mhdLabel.size123(xeFl, yeFl, zeFl);
-
-		// 距離変換
-		nari::vector<float> imgLabelDist(xeFl * yeFl * zeFl), imgLabelDistO(xeRef * yeRef * zeRef);
-		nari::distance::euclidean_signed_distance_transform(imgLabel.ptr(), imgLabelDist.ptr(), xeFl, yeFl, zeFl);
-		mhdRef.save_mhd_and_image(imgLabelDist, input_info.dirO + cases[i].dir + "LS/" + cases[i].basename + ".raw");
-		std::cout << "(｀・ω・´)" << std::endl;
-		//変形
-		deformation_using_movement(xeRef, yeRef, zeRef, xeFl, yeFl, zeFl, imgMoveX, imgMoveY, imgMoveZ, imgLabelDist, imgLabelDistO);
-		oss.str("");
-
-		std::cout << "(｀・ω・´)" << std::endl;
-
-		//距離画像の閾値処理
-		nari::vector<unsigned char> imgLabelO(xeRef * yeRef * zeRef, 0);
-		for (int s = 0; s < xeRef * yeRef * zeRef; s++)
-		{
-			if (imgLabelDistO[s] < 0) imgLabelO[s] = 1;
-		}
-		oss.str("");
-
-		std::cout << "(｀・ω・´)" << std::endl;
-
-		//ラベルの保存
-		oss << input_info.dirO << cases[i].dir + "normalized_label/" + input_info.caseRef_name << "_nmlzd.raw";
-		mhdRef.save_mhd_and_image(imgLabelO, oss.str());
 
 
 

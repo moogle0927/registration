@@ -22,6 +22,9 @@ struct text_info
 	std::string dirFl ;
 	std::string caseRef_dir;
 	std::string caseRef_name;
+	std::string dir_s;
+	std::string dir_d;
+
 	int tmp ;
 	int rangex ;
 	int rangey ;
@@ -51,6 +54,8 @@ struct text_info
 		rangey = info.get_as_int("range_y");
 		rangez = info.get_as_int("range_z");
 		lamb = info.get_as_double("lamb");
+		dir_s = info.get_as_str("S"); //à–¾•Ï”‚Ì”
+		dir_d = info.get_as_str("D"); //–Ú“I•Ï”‚Ì”
 
 
 		info.output();
